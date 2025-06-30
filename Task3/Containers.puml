@@ -1,0 +1,75 @@
+@startuml
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+' --- Акторы ---
+Person(prospect, "Посетитель сайта", "Заполняет заявку на вклад")
+Person(customer, "Пользователь банка", "Использует интернет-банк")
+Person(ccAgent, "Сотрудник контакт-центра", "Обрабатывает обращения клиентов")
+Person(frontOfficer, "Фронт-офис", "Инициирует открытие депозитов")
+Person(backOfficer, "Бэк-офис", "Подтверждает и сопровождает заявки")
+
+' --- Веб сайт ---
+System_Boundary(publicSite, "Портал банка") {
+  Container(webModule, "Веб-модуль", "PHP/React", "Приём заявок и отображение информации")
+  ContainerDb(webDB, "СУБД сайта", "MSSQL", "Хранение заявок и истории обращений")
+}
+
+' --- Интернет-банк ---
+System_Boundary(netbank, "Онлайн-банк") {
+  Container(netbankUI, "Веб-интерфейс ИБ", "ASP.NET MVC", "Работа с продуктами банка")
+  Container(depositService, "Модуль депозитов", ".NET", "Бизнес-логика по вкладам")
+  ContainerDb(netbankDB, "БД интернет-банка", "MS SQL")
+  ContainerDb(depositDB, "БД депозитных продуктов", "MS SQL")
+}
+
+' --- АБС ---
+System_Boundary(coreSys, "Банковский процессинг") {
+  Container(coreApp, "Ядро АБС", "Delphi", "Обработка документов и транзакций")
+  ContainerDb(coreDB, "Операционная БД", "Oracle/PLSQL", "Финансовый учёт и продукты")
+}
+
+' --- Контакт-центр ---
+System_Boundary(ccBlock, "Контакт-центр") {
+  Container(ccWebUI, "Рабочее место оператора", "React.js", "Оформление и обработка заявок")
+  Container(ccBackend, "Центральный сервер КЦ", "Java Spring Boot", "Роутинг заявок и контроль очереди")
+  ContainerDb(ccDB, "Хранилище КЦ", "PostgreSQL")
+}
+
+' --- Асинхронные интеграции ---
+Container_Boundary(msgBus, "Система обмена сообщениями") {
+  Container(requestTopic, "Канал заявок", "Kafka topic")
+  Container(depositTopic, "Канал вкладов", "Kafka topic")
+}
+
+System(smsSrv, "Сервис СМС-уведомлений")
+
+System_Ext(extCC, "Внешний контакт-центр", "Партнер по SLA для обработки части обращений")
+System_Ext(mobileProv, "Оператор связи", "Передаёт сообщения клиентам")
+
+' --- Связи пользователей и компонентов ---
+Rel(prospect, webModule, "Оформляет заявку на вклад")
+Rel(ccAgent, ccWebUI, "Работает с запросами клиентов")
+Rel(ccWebUI, ccBackend, "Frontend API calls")
+Rel(ccBackend, ccDB, "Хранение/чтение статусов заявок")
+Rel(ccBackend, coreApp, "Получение данных по заявке (API/Batch)")
+Rel(webModule, webDB, "Сохраняет/читает заявки")
+Rel(webModule, requestTopic, "Публикует заявки на обработку")
+
+Rel(customer, netbankUI, "Входит в ЛК и выполняет операции")
+Rel(netbankUI, netbankDB, "Чтение/запись пользовательских данных")
+Rel(netbankUI, depositService, "Операции с вкладами (REST)")
+Rel(depositService, netbankDB, "Данные по клиенту")
+Rel(depositService, depositDB, "Обработка и хранение информации о вкладах")
+Rel(depositService, depositTopic, "Публикует новые вклады на обмен")
+Rel(depositService, smsSrv, "Формирует уведомления")
+
+Rel(coreApp, coreDB, "Операции с финансовыми документами")
+Rel(coreApp, depositTopic, "Читает данные о новых вкладах")
+Rel(coreApp, requestTopic, "Обрабатывает заявки")
+Rel(backOfficer, coreApp, "Подтверждает открытие, финальный контроль")
+Rel(frontOfficer, coreApp, "Оформляет заявки клиентов")
+
+Rel(ccBackend, extCC, "Передаёт обращения на аутсорс")
+Rel(smsSrv, mobileProv, "Передача уведомлений через операторов связи")
+
+@enduml
