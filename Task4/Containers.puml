@@ -1,0 +1,31 @@
+@startuml
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+' --- Внешние участники ---
+Person(nsuSpecialist, "Специалист депозитного блока", "Ведёт актуализацию тарифов")
+Person(contactAgent, "Сотрудник контакт-центра", "Дает консультации по звонкам")
+Person_Ext(remoteCCAgent, "Оператор аутсорс-КЦ", "Осуществляет поддержку на стороне партнёра")
+
+Container_Ext(remoteCCSystem, "Внешняя система КЦ партнёра", "Обеспечивает доступ к ставкам через файлы")
+
+' --- Внутренние системы банка ---
+System_Boundary(mainInfra, "ИТ комплекс банка") {
+    Container(coreEngine, "Базовая банковская система", "Delphi, PL/SQL", "Сервер ставок и операций, внутренний API")
+    ContainerDb(coreDb, "Хранилище ставок/депозитов", "Oracle", "Актуальные предложения и параметры")
+    Container(contactPlatform, "Контакт-центр банка", "React.js / Java Spring Boot", "Обеспечивает консультации")
+    ContainerDb(platformDb, "База контакт-центра", "PostgreSQL", "Данные обращений и консультаций")
+}
+
+' --- Связи внутренние ---
+Rel(nsuSpecialist, coreEngine, "Обновляет ставки предложения", "manual/API")
+Rel(coreEngine, coreDb, "Чтение и запись ставок", "SQL")
+Rel(contactAgent, contactPlatform, "Получает актуальные тарифы")
+Rel(contactPlatform, platformDb, "Работает с заявками клиентов", "SQL")
+Rel(contactPlatform, coreDb, "Запрашивает список ставок", "SQL")
+
+' --- Каналы для партнёра по ставкам ---
+Rel(nsuSpecialist, remoteCCSystem, "Передаёт файл с обновлёнными ставками")
+Rel(contactPlatform, remoteCCSystem, "Передаёт обращения при необходимости")
+Rel(remoteCCAgent, remoteCCSystem, "Получает файл c тарифами для консультаций")
+
+@enduml

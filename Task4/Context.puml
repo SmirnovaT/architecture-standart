@@ -1,0 +1,21 @@
+@startuml
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+Person(backOffice, "Специалист депозита", "Добавляет и утверждает новые ставки")
+Person(ccAgent, "Оператор КЦ банка", "Обслуживает клиентов банка по телефону")
+Person_Ext(extCCAgent, "Партнёрский оператор", "Работает в системе партнёра")
+
+System(coreBank, "Банковская система (АБС)", "Главная база ставок и продуктов")
+System(ccSystem, "Платформа контакт-центра", "Операции с обращениями и звонками клиентов")
+System_Ext(partnerCCSystem, "Платформа кол-центра партнёра", "Внешнее решение для консультаций")
+
+Rel(backOffice, coreBank, "Обновляет и формирует перечень ставок")
+Rel(backOffice, partnerCCSystem, "Выгружает файл с актуальными тарифами для внешней поддержки")
+
+Rel(ccAgent, ccSystem, "Запрашивает текущие ставки при консультации")
+Rel(extCCAgent, partnerCCSystem, "Открывает поступивший файл ставок для консультаций клиентов")
+
+Rel(ccSystem, coreBank, "Запрос наиболее свежих ставок онлайн")
+Rel(ccSystem, partnerCCSystem, "Перенаправление обращений к внешней системе партнёра при высокой загрузке")
+
+@enduml

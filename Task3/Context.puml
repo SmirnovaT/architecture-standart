@@ -1,0 +1,32 @@
+@startuml
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+Person(individual, "Посетитель сайта", "Гость, инициирует оформление депозита")
+Person(accountHolder, "Клиент банка", "Зарегистрирован, работает в ИБ")
+Person(ccOperator, "Специалист кол-центра", "Обрабатывает обращения")
+Person(frontEmployee, "Фронт-офис", "Оформляет и подтверждает клиентские операции")
+Person(backEmployee, "Бэк-офис", "Проводит контроль и финальное согласование")
+
+System(ibSystem,"Дистанционное банковское обслуживание", "Личный кабинет для клиентов")
+System(coreBank,"Основная банковская система","Ведёт счета, процессы, хранит продукты")
+System(ccSystem,"Кол-центр банка","Обрабатывает онлайн и телефонные заявки")
+System(webPortal,"Публичный сайт", "Для заявок новых клиентов и информации")
+System(smsModule,"SMS-модуль","Формирует сообщения для клиентов")
+
+System_Ext(extCC,"Партнерский центр обработки обращений","Обработка по SLA, внешний подрядчик")
+System_Ext(telecom,"Мобильный оператор","Доставка СМС клиентам")
+
+Rel(individual, webPortal, "Заполняет заявку на банковский продукт")
+Rel(accountHolder, ibSystem, "Открывает новый вклад онлайн")
+Rel(backEmployee, coreBank, "Согласовывает и проводит заявки")
+Rel(ibSystem, smsModule, "Формирует сообщения для подтверждения")
+Rel(ccOperator, ccSystem, "Принимает заявку к обработке")
+Rel(frontEmployee, coreBank, "Выполняет основные операции по заявкам")
+Rel(coreBank, webPortal, "Обеспечивает актуальные параметры по продуктам")
+Rel(coreBank, ibSystem, "Отправляет индивидуальные предложения в ЛК клиента")
+Rel(ccSystem, coreBank, "Передаёт заявки из КЦ в банковскую систему")
+
+Rel(ccSystem, extCC, "Маршрутизирует обращения для внешней обработки")
+Rel(smsModule, telecom, "Направляет сообщения для конечных клиентов")
+
+@enduml
